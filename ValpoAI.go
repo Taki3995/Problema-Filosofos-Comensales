@@ -36,32 +36,41 @@ func logMensaje(id int, mensaje string) {
 func (h *Hilo) ejecutar(wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	for {
+	// El hilo iterará exactamente hasta cumplir la meta de entrenamientos
+	for h.ciclosCompletados < META_ENTRENAMIENTO {
 		// 1. FASE DE PREPARACIÓN
 		logMensaje(h.id, "Fase de Preparación: Limpiando memoria...")
 		// Simula tiempo de procesamiento local sin usar recursos
 		time.Sleep(time.Duration(rand.Intn(500)+100) * time.Millisecond)
 
 		// 2. FASE DE ADQUISICIÓN
-		logMensaje(h.id, "Fase de Adquisición: Intentando tomar recursos...")
+		logMensaje(h.id, "Fase de Adquisición: Intentando tomar recursos (Izquierda: Gráfica, Derecha: Almacenamiento)...")
 
-		// Estrategia Asimétrica (Zurdos y Diestros)
+		// Variables para identificar qué estamos tomando
+		var nombrePrimerRecurso, nombreSegundoRecurso string
 		primerRecurso := h.izquierdo
 		segundoRecurso := h.derecho
 
-		if h.id%2 != 0 {
-			// Si es un hilo impar, invierte el orden (primero derecha, luego izquierda)
+		// Estrategia Asimétrica (Zurdos y Diestros)
+		if h.id%2 == 0 {
+			// Hilo par: toma primero izquierda (Gráfica), luego derecha (Almacenamiento)
+			nombrePrimerRecurso = "Gráfica (Izquierdo)"
+			nombreSegundoRecurso = "Almacenamiento (Derecho)"
+		} else {
+			// Hilo impar: invierte el orden. Toma primero derecha (Almacenamiento), luego izquierda (Gráfica)
 			primerRecurso = h.derecho
 			segundoRecurso = h.izquierdo
+			nombrePrimerRecurso = "Almacenamiento (Derecho)"
+			nombreSegundoRecurso = "Gráfica (Izquierdo)"
 		}
 
-		// Adquiere el primer recurso (Espera pacientemente en segundo plano si está ocupado)
+		// Adquiere el primer recurso (Espera pacientemente si está ocupado)
 		primerRecurso.Lock()
-		logMensaje(h.id, fmt.Sprintf("Aseguró recurso %d.", primerRecurso.id))
+		logMensaje(h.id, fmt.Sprintf("Aseguró recurso %d: %s.", primerRecurso.id, nombrePrimerRecurso))
 
 		// Adquiere el segundo recurso
 		segundoRecurso.Lock()
-		logMensaje(h.id, fmt.Sprintf("Aseguró recurso %d. ¡Ambos recursos obtenidos!", segundoRecurso.id))
+		logMensaje(h.id, fmt.Sprintf("Aseguró recurso %d: %s. ¡Ambos recursos obtenidos!", segundoRecurso.id, nombreSegundoRecurso))
 
 		// 3. FASE DE CÓMPUTO
 		logMensaje(h.id, "Fase de Cómputo: Entrenando modelo de IA...")
@@ -75,12 +84,10 @@ func (h *Hilo) ejecutar(wg *sync.WaitGroup) {
 		primerRecurso.Unlock()
 
 		h.ciclosCompletados++
-
-		// Verificación de la meta impuesta
-		if h.ciclosCompletados == META_ENTRENAMIENTO {
-			logMensaje(h.id, ">>> ¡ALCANZÓ LA META DE 5 ENTRENAMIENTOS! <<<")
-		}
+		logMensaje(h.id, fmt.Sprintf(">>> Completó %d de %d entrenamientos. <<<", h.ciclosCompletados, META_ENTRENAMIENTO))
 	}
+	
+	logMensaje(h.id, "--- HA FINALIZADO SU TRABAJO ---")
 }
 
 func main() {
@@ -114,6 +121,7 @@ func main() {
 		go hilos[i].ejecutar(&wg)
 	}
 
-	// Bloquea el hilo principal para que el programa no termine instantáneamente
+	// Bloquea el hilo principal para que el programa no termine hasta que todos llamen a wg.Done()
 	wg.Wait()
+	fmt.Println("=== Todos los hilos han terminado exitosamente. ===")
 }

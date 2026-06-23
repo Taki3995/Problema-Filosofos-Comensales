@@ -1,5 +1,8 @@
 # Criterios Conceptuales Críticos
 
+## Deadlock
+El problema central que experimenta la arquitectura de ValpoIA Labs es un estado de Deadlock. Este problema técnico ocurre cuando un conjunto de unidades de cómputo quedan bloqueadas permanentemente porque cada una retiene un recurso de hardware mientras espera adquirir un segundo componente que está siendo retenido por un nodo vecino. El resultado es que el clúster completo deja de procesar datos, obligando a reiniciar los servidores. Este Deadlock es la consecuencia directa de la coexistencia de las siguientes condiciones estructurales (Condiciones de Coffman):
+
 ## 1. Retención y Espera (Hold and Wait)
 El diseño del ciclo operativo exige que cada hilo de entrenamiento intente tomar primero el recurso de hardware ubicado a su izquierda y luego el de su derecha. Al obtener el primer componente, el hilo lo retiene indefinidamente mientras se encuentra a la espera de que el segundo componente sea liberado por un nodo vecino. Esta política de asignación secuencial y retención ciega es el principal causante del bloqueo, ya que bloquea hardware muy necesario sin garantizar que el proceso completo pueda iniciar su fase de cómputo.
 
